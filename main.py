@@ -78,7 +78,7 @@ Train w/ GD
  - each iter adjusts weights and bias to minimize error
 """
 gd_initial_loss = mse(y_train, gd_model.predict(X_train))
-gd_losses = gd(gd_model, X_train, y_train, learning_rate=0.05, epochs=200)
+gd_losses = gd(gd_model, X_train, y_train, learning_rate=0.05, epochs=200)#gd learning rate
 
 """
 compare training mse before and after optimization
@@ -95,7 +95,7 @@ sgd_model = Model(n_features=X_train.shape[1])
 sgd_model.bias = np.mean(y_train)
 
 sgd_initial_rmse = np.sqrt(mse(y_train, sgd_model.predict(X_train)))
-sgd_losses = sgd(sgd_model, X_train, y_train, learning_rate=0.01, epochs=200)
+sgd_losses = sgd(sgd_model, X_train, y_train, learning_rate=0.001, epochs=200) #sgd learning rate
 sgd_final_rmse = np.sqrt(mse(y_train, sgd_model.predict(X_train)))
 sgd_test_rmse = np.sqrt(mse(y_test, sgd_model.predict(X_test)))
 
