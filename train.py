@@ -46,21 +46,25 @@ def gradient(model, X, y_realized):
     
     repeatedly adjust weights and bias to min mse
 """
-def gd(model, X, y_realized, learning_rate, epochs):
+def gd(model, X, y_realized, learning_rate, epochs, X_val=None, y_val=None):
     losses = []
+    val_losses = []
     times = []
     start = time.perf_counter()
 
     for epoch in range(epochs):
-        gradient_weights, gradient_bias = gradient(model, X, y_realized)
-        model.weights -= learning_rate * gradient_weights
-        model.bias -= learning_rate * gradient_bias
+        gradient_weights, gradient_bias = gradient(model, X, y_realized)#calculate gradient w/ only training data
+        model.weights -= learning_rate * gradient_weights#weight update
+        model.bias -= learning_rate * gradient_bias#bias update
 
-        y_predicted = model.predict(X)
-        loss = mse(y_realized, y_predicted)
-        losses.append(loss)
+        train_loss = mse(y_realized, model.predict(X))#training loss calc
+        losses.append(train_loss)
+        if X_val is not None and y_val is not None:
+            val_loss = mse(y_val, model.predict(X_val))
+            val_losses.append(val_loss)
+
         times.append(time.perf_counter() - start)
-    return losses, times
+    return losses, times, val_losses
 
 
 """
@@ -69,8 +73,9 @@ SGD function
         
 
 """
-def sgd(model, X, y_realized, learning_rate, epochs):
+def sgd(model, X, y_realized, learning_rate, epochs, X_val=None, y_val=None):
     losses = []
+    val_losses = []
     times = []
     start = time.perf_counter()
     rng = np.random.default_rng(42)
@@ -83,10 +88,13 @@ def sgd(model, X, y_realized, learning_rate, epochs):
 
         loss = mse(y_realized, model.predict(X))#take mse on all laps after epoch
         losses.append(loss)
+        if X_val is not None and y_val is not None:
+            val_loss = mse(y_val, model.predict(X_val))
+            val_losses.append(val_loss)
         times.append(time.perf_counter() - start) #time counter
 
 
-    return losses, times
+    return losses, times, val_losses
 
 
 """
@@ -95,8 +103,11 @@ def sgd(model, X, y_realized, learning_rate, epochs):
     v_t = B_v_t-1 + grad(MSE)
 
 """
-def momentum(model, X, y_realized, learning_rate, epochs, beta = 0.9):
+def momentum(model, X, y_realized, learning_rate, epochs, beta = 0.9, X_val=None, y_val=None):
     losses = []#mse per epoch
+    val_losses = []
+    times = []
+    start = time.perf_counter()
 
     #initialize momentum for weights & bias
     velocity_weights = np.zeros_like(model.weights)
@@ -112,25 +123,30 @@ def momentum(model, X, y_realized, learning_rate, epochs, beta = 0.9):
         y_predicted = model.predict(X)
         loss = mse(y_realized, y_predicted)
         losses.append(loss)
+        if X_val is not None and y_val is not None:
+            val_loss = mse(y_val, model.predict(X_val))
+            val_losses.append(val_loss)
 
-    return losses
+        times.append(time.perf_counter() - start)
+
+    return losses, times, val_losses
 
 
-def adam(model, X, y_realized, learning_rate, epochs, beta1 = 0.9, beta2 =0.999, epsilon=1e-8):
+def adam(model, X, y_realized, learning_rate, epochs, beta1 = 0.9, beta2 =0.999, epsilon=1e-8, X_val=None, y_val=None):
     losses = []
+    val_losses = []
+    times = []
+    start = time.perf_counter()
 
     m_weights = np.zeros_like(model.weights)#first moment/moving avg of grads
     m_bias = 0.0
-
     v_weights = np.zeros_like(model.weights)#second moment
     v_bias = 0.0
 
     for epoch in range(epochs):
         gradient_weights, gradient_bias = gradient(model, X, y_realized)
-
-        m_weights = beta1 * m_weights + (1-beta1)* gradient_weights**2 # first moment
+        m_weights = beta1 * m_weights + (1-beta1) * gradient_weights # first moment
         m_bias = beta1 * m_bias + (1-beta1) * gradient_bias
-
         v_weights = beta2 * v_weights + (1- beta2)*gradient_weights**2# 2nd moment
         v_bias = beta2 * v_bias +  (1-beta2) * gradient_bias**2
 
@@ -138,7 +154,6 @@ def adam(model, X, y_realized, learning_rate, epochs, beta1 = 0.9, beta2 =0.999,
 
         m_weights_hat = m_weights / (1-beta1**t)
         m_bias_hat = m_bias / (1 - beta1**t)
-
         v_weights_hat = v_weights / (1-beta2**t)
         v_bias_hat = v_bias / (1-beta2**t)
 
@@ -149,5 +164,11 @@ def adam(model, X, y_realized, learning_rate, epochs, beta1 = 0.9, beta2 =0.999,
         y_predicted = model.predict(X)
         loss = mse(y_realized, y_predicted)
         losses.append(loss)
+        if X_val is not None and y_val is not None:
+            val_loss = mse(y_val, model.predict(X_val))
+            val_losses.append(val_loss)
 
-    return losses
+        times.append(time.perf_counter() - start)
+
+
+    return losses, times, val_losses
